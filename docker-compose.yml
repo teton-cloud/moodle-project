@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  moodle-db:
+    image: 17.5-alpine3.21
+    container_name: moodle_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+
+  moodle-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moodle_app
+    restart: always
+    environment:
+      MOODLE_BRANCH: ${MOODLE_BRANCH}
+      MOODLE_DB_TYPE: pgsql
+      MOODLE_DB_HOST: moodle-db
+      MOODLE_DB_NAME: ${POSTGRES_DB}
+      MOODLE_DB_USER: ${POSTGRES_USER}
+      MOODLE_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      MOODLE_SITE_NAME: "Moodle 5.0"
+      MOODLE_SITE_URL: "https://${DOMAIN}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.moodle.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.moodle.entrypoints=websecure"
+      - "traefik.http.routers.moodle.tls=true"
+      - "traefik.http.routers.moodle.tls.certresolver=le"
+    volumes:
+      - ${MOODLE_DATA_PATH}:/moodledata
+    depends_on:
+      - moodle-db
