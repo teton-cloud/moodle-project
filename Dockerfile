@@ -7,6 +7,8 @@ RUN apt-get update && \
     libpq-dev \
     libzip-dev \
     unzip \
+    libsodium-dev \
+    pkg-config && \
     && docker-php-ext-install pgsql pdo_pgsql sodium
 
 # Set PHP configurations
@@ -23,6 +25,12 @@ RUN git clone --branch $MOODLE_BRANCH --depth 1 git://git.moodle.org/moodle.git 
 RUN mkdir -p /moodledata && \
     chown -R www-data:www-data /moodledata && \
     chmod -R 777 /moodledata
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+
+# Expose HTTP and HTTPS ports
+EXPOSE 80
 
 # Entrypoint script
 COPY entrypoint.sh /entrypoint.sh
