@@ -5,6 +5,10 @@ set -e
 MOODLE_DIR="/var/www/html"
 MOODLE_BRANCH=${MOODLE_BRANCH:-MOODLE_500_STABLE}
 
+# Allow Git to work in the Moodle directory
+echo "Configuring Git safe directory..."
+git config --global --add safe.directory $MOODLE_DIR
+
 echo "Pulling latest Moodle updates from branch: $MOODLE_BRANCH"
 cd $MOODLE_DIR
 

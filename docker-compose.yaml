@@ -11,6 +11,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   moodle-app:
     build:
@@ -37,3 +42,8 @@ services:
       - ${MOODLE_DATA_PATH}:/moodledata
     depends_on:
       - moodle-db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
