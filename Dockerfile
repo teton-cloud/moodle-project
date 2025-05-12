@@ -9,7 +9,7 @@ RUN apt-get update && \
     unzip \
     libsodium-dev \
     pkg-config && \
-    && docker-php-ext-install pgsql pdo_pgsql sodium
+    docker-php-ext-install pgsql pdo_pgsql sodium
 
 # Set PHP configurations
 RUN echo "max_input_vars=5000" >> /usr/local/etc/php/conf.d/moodle.ini
