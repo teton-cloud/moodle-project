@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   moodle-db:
-    image: 17.5-alpine3.21
+    image: postgres:16-alpine
     container_name: moodle_db
     restart: always
     environment:
