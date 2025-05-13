@@ -12,21 +12,33 @@ RUN apt-get update && \
     pkg-config && \
     docker-php-ext-install pgsql pdo_pgsql sodium
 
+# Set ServerName globally
+RUN echo "ServerName ${DOMAIN}" >> /etc/apache2/apache2.conf
+
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Pull Moodle code
+ARG MOODLE_BRANCH=MOODLE_500_STABLE
+ARG GIT_REPO=https://github.com/moodle/moodle.git
 
-# Apache configuration
-RUN a2enmod rewrite
+RUN echo "Cloning Moodle branch ${MOODLE_BRANCH}..." && \
+    git clone --branch ${MOODLE_BRANCH} ${GIT_REPO} . && \
+    rm -rf .git
 
-# Set file permissions for Apache
+# Copy config.php
+COPY config.php /var/www/html/config.php
+
+# Set file permissions for Apache and Moodle
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html
 
-# Set entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+# Moodle upgrade
+RUN php admin/cli/upgrade.php --non-interactive || echo "Moodle upgrade failed. Check the logs."
+
+# Enable Apache modules
+RUN a2enmod rewrite
+
+# Entrypoint
 CMD ["apache2-foreground"]
 

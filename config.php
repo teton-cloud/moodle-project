@@ -32,7 +32,7 @@ $CFG->wwwroot = getenv('DOMAIN') ? 'https://' . getenv('DOMAIN') : 'http://local
 //=========================================================================
 // 3. DATA FILES LOCATION
 //=========================================================================
-$CFG->dataroot = getenv('MOODLE_DATA_PATH') ?: '/moodledata';
+$CFG->dataroot = '/moodledata';
 
 //=========================================================================
 // 4. ADMIN DIRECTORY LOCATION
@@ -54,3 +54,7 @@ $CFG->debugdisplay = (bool) getenv('DEBUG_DISPLAY') ?: false;
 // 7. REQUIRED LIBRARY
 //=========================================================================
 require_once(__DIR__ . '/lib/setup.php');
+
+// Debugging: Log $CFG to Apache error log
+error_log("Moodle CFG: " . print_r($CFG, true));
+

@@ -22,6 +22,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: moodle-app
+    env_file:
+      - .env
       #restart: always
     environment:
       MOODLE_BRANCH: ${MOODLE_BRANCH}
@@ -32,15 +34,39 @@ services:
       MOODLE_DB_PASSWORD: ${POSTGRES_PASSWORD}
       MOODLE_SITE_NAME: ${SITE_NAME}
       MOODLE_SITE_URL: "https://${DOMAIN}"
+    command: |
+      /bin/bash -c "
+        echo 'Setting permissions for /moodledata...';
+        chown -R www-data:www-data /moodledata;
+        chmod -R 775 /moodledata;
+        chmod -R g+s /moodledata;
+        echo 'ServerName ${DOMAIN}' >> /etc/apache2/apache2.conf;
+        apache2-foreground
+      "
+
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.moodle.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.moodle.entrypoints=websecure"
-      - "traefik.http.routers.moodle.tls=true"
-      - "traefik.http.routers.moodle.tls.certresolver=le"
+
+      # HTTP Router (Redirect HTTP to HTTPS)
+      - "traefik.http.routers.moodle-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.moodle-http.entrypoints=web"
+      - "traefik.http.routers.moodle-http.middlewares=https-redirect"
+
+      # Middleware for HTTP to HTTPS Redirect
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+
+      # HTTPS Router
+      - "traefik.http.routers.moodle-https.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.moodle-https.entrypoints=websecure"
+      - "traefik.http.routers.moodle-https.tls=true"
+      - "traefik.http.routers.moodle-https.tls.certresolver=le"
+      - "traefik.http.routers.moodle-https.service=moodle-service"
+
+      # Service Definition
+      - "traefik.http.services.moodle-service.loadbalancer.server.port=80"
+
     volumes:
       - ${MOODLE_DATA_PATH}:/moodledata
-      - ./config.php:${MOODLE_HOME}/config.php
     ports:
       - '8082:80'
     depends_on:
