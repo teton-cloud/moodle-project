@@ -1,64 +1,60 @@
 networks:
   moodle-network:
     driver: bridge
-
 services:
   moodle-db:
-    image: postgres:16-alpine
+    image: 'postgres:16-alpine'
     container_name: moodle-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: moodle
-      POSTGRES_DB: moodle
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      POSTGRES_PORT: 5432
     networks:
       - moodle-network
+    ports:
+      - '8432:5432'
     volumes:
-      - /services/volumes/moodle-app/moodle-db:/var/lib/postgresql/data
+      - '/services/volumes/moodle-app/moodle-db:/var/lib/postgresql/data'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d moodle"]
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U postgres -d moodle'
       interval: 10s
       timeout: 5s
       retries: 5
-
   moodle-app:
-    image: bitnami/moodle:latest
+    image: docker.io/bitnami/moodle:5.0
     container_name: moodle-app
     restart: always
     environment:
       - MOODLE_DATABASE_TYPE=pgsql
       - MOODLE_DATABASE_HOST=moodle-db
       - MOODLE_DATABASE_PORT_NUMBER=5432
-      - MOODLE_DATABASE_USER=postgres
-      - MOODLE_DATABASE_NAME=moodle
-      - MOODLE_DATABASE_PASSWORD=moodle
+      - MOODLE_DATABASE_USER=
+      - MOODLE_DATABASE_NAME=
+      - MOODLE_DATABASE_PASSWORD=
+      - MOODLE_USERNAME=
+      - MOODLE_PASSWORD=
       - MOODLE_EMAIL=noreply@tetonsoftware.dev
-      - MOODLE_SITE_NAME=Kool Skool
+      - 'MOODLE_SITE_NAME=Kool Skool'
     networks:
       - moodle-network
     volumes:
-      - /services/volumes/moodle-app/moodle:/bitnami/moodle
-      - /services/volumes/moodle-app/moodledata:/bitnami/moodledata
+      - '/services/volumes/moodle-app/moodle:/bitnami/moodle'
+      - '/services/volumes/moodle-app/moodledata:/bitnami/moodledata'
     ports:
-      - "8082:80"
+      - '8082:8080'
     labels:
-      - "traefik.enable=true"
-      # HTTP Router (Redirect HTTP to HTTPS)
-      - "traefik.http.routers.moodle-app.rule=Host(`school.tetonsoftware.cloud`)"
-      - "traefik.http.routers.moodle-app.entrypoints=websecure"
-      # - "traefik.http.routers.moodle-http.middlewares=https-redirect"
-      # Middleware for HTTP to HTTPS Redirect
-      # - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
-      # HTTPS Router
-      # - "traefik.http.routers.moodle-https.rule=Host(`${DOMAIN}`)"
-      # - "traefik.http.routers.moodle-https.entrypoints=websecure"
-      # - "traefik.http.routers.moodle-https.tls=true"
-      - "traefik.http.routers.moodle-app.tls.certresolver=letsencrypt"
-      # - "traefik.http.routers.moodle-https.service=moodle-service"
-      # Service Definition
-      - "traefik.http.services.moodle-app.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.moodle.rule=Host(`school.tetonsoftware.cloud`)
+      - traefik.http.routers.moodle.tls.certresolver=letsencrypt
+      - traefik.http.services.moodle.loadbalancer.server.port=8080
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082 || exit 1"]
+      test:
+        - CMD-SHELL
+        - 'curl -f http://127.0.0.1:8080 || exit 1'
       interval: 15s
       timeout: 10s
       retries: 3
